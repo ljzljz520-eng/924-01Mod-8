@@ -63,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'download_url' => $download_url,
         'tags' => trim($_POST['tags'] ?? ''),
         'preview_images' => $preview_images,
+        'is_paid' => isset($_POST['is_paid']) ? 1 : 0,
+        'price' => (float)($_POST['price'] ?? 0),
     ];
 
     if (!$payload['title'] || !$payload['download_url']) {
@@ -179,6 +181,19 @@ if (!empty($form_data)) {
         <div>
             <label>标签（用逗号分隔）</label>
             <input name="tags" placeholder="企业,响应式" value="<?php echo e($display_data['tags'] ?? ''); ?>">
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div>
+                <label style="display:flex;align-items:center;gap:8px;font-weight:600;">
+                    <input type="checkbox" name="is_paid" <?php echo (($display_data['is_paid'] ?? 0) ? 'checked' : ''); ?>>
+                    付费素材
+                </label>
+            </div>
+            <div>
+                <label>价格（元）</label>
+                <input type="number" name="price" step="0.01" min="0" placeholder="0.00" value="<?php echo e($display_data['price'] ?? '0.00'); ?>">
+            </div>
         </div>
         
         <div style="display:flex;gap:10px;justify-content:flex-end;">

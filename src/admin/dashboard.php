@@ -42,6 +42,7 @@ $templates = fetch_templates();
             <tr>
                 <th>ID</th>
                 <th>标题</th>
+                <th>类型</th>
                 <th>标签</th>
                 <th>下载链接</th>
                 <th>更新时间</th>
@@ -53,6 +54,13 @@ $templates = fetch_templates();
                 <tr>
                     <td><?php echo e($tpl['id']); ?></td>
                     <td><?php echo e($tpl['title']); ?></td>
+                    <td>
+                        <?php if (!empty($tpl['is_paid'])): ?>
+                            <span class="paid-badge">💰 付费 ¥<?php echo e($tpl['price']); ?></span>
+                        <?php else: ?>
+                            <span class="free-badge">🆓 免费</span>
+                        <?php endif; ?>
+                    </td>
                     <td><?php echo e($tpl['tags']); ?></td>
                     <td><a href="<?php echo e($tpl['download_url']); ?>" target="_blank" rel="noopener">下载</a></td>
                     <td><?php echo e($tpl['updated_at']); ?></td>
