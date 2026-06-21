@@ -35,31 +35,50 @@ function get_collections_by_user(int $user_id, ?string $category = null): array
     return $stmt->fetchAll();
 }
 
-function get_shared_collections(int $user_id): array
+function get_shared_collections(int $user_id, ?string $category = null): array
 {
     $pdo = db();
-    $stmt = $pdo->prepare('SELECT c.*, u.real_name as creator_name,
+    $sql = 'SELECT c.*, u.real_name as creator_name,
             (SELECT COUNT(*) FROM collection_items ci WHERE ci.collection_id = c.id) as item_count,
-            (SELECT COUNT(*) FROM collection_members cm WHERE cm.collection_id = c.id) as member_count
+            (SELECT COUNT(*) FROM collection_members cm2 WHERE cm2.collection_id = c.id) as member_count
             FROM collections c
             LEFT JOIN users u ON c.created_by = u.id
             INNER JOIN collection_members cm ON cm.collection_id = c.id
-            WHERE cm.user_id = :user_id AND c.created_by != :user_id
-            ORDER BY c.updated_at DESC');
-    $stmt->execute([':user_id' => $user_id]);
+            WHERE cm.user_id = :user_id AND c.created_by != :user_id2';
+    
+    $params = [':user_id' => $user_id, ':user_id2' => $user_id];
+    
+    if ($category) {
+        $sql .= ' AND c.category = :category';
+        $params[':category'] = $category;
+    }
+    
+    $sql .= ' ORDER BY c.updated_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     return $stmt->fetchAll();
 }
 
-function get_public_collections(): array
+function get_public_collections(?string $category = null): array
 {
     $pdo = db();
-    $stmt = $pdo->query('SELECT c.*, u.real_name as creator_name,
+    $sql = 'SELECT c.*, u.real_name as creator_name,
             (SELECT COUNT(*) FROM collection_items ci WHERE ci.collection_id = c.id) as item_count,
             (SELECT COUNT(*) FROM collection_members cm WHERE cm.collection_id = c.id) as member_count
             FROM collections c
             LEFT JOIN users u ON c.created_by = u.id
-            WHERE c.is_public = 1
-            ORDER BY c.updated_at DESC');
+            WHERE c.is_public = 1';
+    
+    $params = [];
+    
+    if ($category) {
+        $sql .= ' AND c.category = :category';
+        $params[':category'] = $category;
+    }
+    
+    $sql .= ' ORDER BY c.updated_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     return $stmt->fetchAll();
 }
 

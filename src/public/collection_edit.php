@@ -13,9 +13,25 @@ $collection = $collection_id ? get_collection($collection_id) : null;
 $error = '';
 $success = '';
 
-if ($collection && $collection['created_by'] != $user['id']) {
-    header('Location: /collections.php');
-    exit;
+if ($collection) {
+    $is_owner = $collection['created_by'] == $user['id'];
+    $member_perm = null;
+    if (!$is_owner) {
+        $members = get_collection_members($collection_id);
+        foreach ($members as $m) {
+            if ($m['user_id'] == $user['id']) {
+                $member_perm = $m;
+                break;
+            }
+        }
+        if (!$member_perm || !$member_perm['can_edit']) {
+            header('Location: /collections.php');
+            exit;
+        }
+    }
+} else {
+    $is_owner = true;
+    $member_perm = null;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -60,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'add_member' && $collection_id) {
+    if ($action === 'add_member' && $collection_id && $is_owner) {
         $user_id = (int)($_POST['user_id'] ?? 0);
         if ($user_id > 0) {
             $permissions = [
@@ -73,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'remove_member' && $collection_id) {
+    if ($action === 'remove_member' && $collection_id && $is_owner) {
         $user_id = (int)($_POST['user_id'] ?? 0);
         if ($user_id > 0 && $user_id != $collection['created_by']) {
             remove_member_from_collection($collection_id, $user_id);
@@ -81,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'delete' && $collection_id) {
+    if ($action === 'delete' && $collection_id && $is_owner) {
         delete_collection($collection_id);
         header('Location: /collections.php');
         exit;
@@ -277,7 +293,7 @@ $category_tags = [
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <?php if ($member['user_id'] != $collection['created_by']): ?>
+                            <?php if ($is_owner && $member['user_id'] != $collection['created_by']): ?>
                                 <form method="POST">
                                     <input type="hidden" name="action" value="remove_member">
                                     <input type="hidden" name="user_id" value="<?php echo e($member['user_id']); ?>">
@@ -288,6 +304,7 @@ $category_tags = [
                     <?php endforeach; ?>
                 </div>
 
+                <?php if ($is_owner): ?>
                 <form method="POST" class="add-member-form">
                     <input type="hidden" name="action" value="add_member">
                     <div class="form-group">
@@ -319,9 +336,10 @@ $category_tags = [
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">➕ 添加成员</button>
                 </form>
+                <?php endif; ?>
             </section>
 
-            <?php if ($collection['created_by'] == $user['id']): ?>
+            <?php if ($is_owner): ?>
             <section class="card-section danger-zone">
                 <h2>⚠️ 危险操作</h2>
                 <form method="POST" onsubmit="return confirm('确定要删除这个合集吗？此操作不可撤销。');">

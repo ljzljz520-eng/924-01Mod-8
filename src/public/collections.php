@@ -11,8 +11,8 @@ $category = $_GET['category'] ?? null;
 $tab = $_GET['tab'] ?? 'my';
 
 $my_collections = get_collections_by_user($user['id'], $category);
-$shared_collections = get_shared_collections($user['id']);
-$public_collections = get_public_collections();
+$shared_collections = get_shared_collections($user['id'], $category);
+$public_collections = get_public_collections($category);
 
 $category_icons = [
     'wedding' => '💒',
